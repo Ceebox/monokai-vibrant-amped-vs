@@ -8,54 +8,58 @@ jobs:
   build:
     runs-on: windows-latest
     permissions:
-      # Required to create the release
-      contents: write 
+      # Required for creating a release
+      contents: write  
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Configure nuget
-        uses: nuget/setup-nuget@v1
-
-      - name: Configure msbuild
-        uses: microsoft/setup-msbuild@v2
-
-      - name: Set version number
+      - name: Set version as 1.0.$GITHUB_RUN_NUMBER
         id: version
         shell: pwsh
         run: |
           $version = "1.0.$env:GITHUB_RUN_NUMBER"
-          echo "Setting version to $version"
-          echo "VERSION=$version" >> $env:GITHUB_ENV
-          echo "::set-output name=tag::v$version"  # deprecated but supported for compatibility
-          echo "::set-output name=filename::MonokaiVibrantAmped.vsix"
+          Write-Output "Setting version to $version"
+          "VERSION=$version" >> $env:GITHUB_ENV
+          "tag=v$version" >> $env:GITHUB_OUTPUT
+          "filename=MonokaiVibrantAmped.vsix" >> $env:GITHUB_OUTPUT
 
       - name: Update version in .vsixmanifest
         shell: pwsh
         run: |
-          (Get-Content -Path "source.extension.vsixmanifest") |
+          (Get-Content "source.extension.vsixmanifest") |
             ForEach-Object { $_ -replace '1\.0\.0', "$env:VERSION" } |
-            Set-Content -Path "source.extension.vsixmanifest"
+            Set-Content "source.extension.vsixmanifest"
 
-      - name: Restore NuGet
+      - name: Configure NuGet
+        uses: nuget/setup-nuget@v1
+
+      - name: Configure MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Restore NuGet packages
         run: nuget restore
 
-      - name: Build Visual Studio extension
-        run: msbuild /p:configuration=Release /p:DeployExtension=false /p:ZipPackageCompressionLevel=normal
+      - name: Build VSIX package
+        run: msbuild /p:Configuration=Release /p:DeployExtension=false /p:ZipPackageCompressionLevel=normal
 
-      - uses: actions/upload-artifact@v4
+      - name: Debug – List VSIX output
+        run: dir bin\Release
+
+      - name: Upload VSIX as build artifact
+        uses: actions/upload-artifact@v4
         with:
-          name: MonokaiVibrantAmped.vsix
-          path: bin\Release\MonokaiVibrantAmped.vsix
+          name: ${{ steps.version.outputs.filename }}
+          path: bin\Release\${{ steps.version.outputs.filename }}
 
-      - name: Create GitHub Release
+      - name: Create GitHub Release and Upload VSIX
         uses: softprops/action-gh-release@v2
         if: success()
         with:
           tag_name: ${{ steps.version.outputs.tag }}
           name: Release ${{ env.VERSION }}
           body: ${{ github.event.head_commit.message }}
-          prerelease: false
-          files: bin\Release\MonokaiVibrantAmped.vsix
+          files: bin\Release\${{ steps.version.outputs.filename }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
