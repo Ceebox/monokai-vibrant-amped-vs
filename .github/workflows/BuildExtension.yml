@@ -29,23 +29,9 @@ jobs:
         run: |
           $version = "1.0.$env:GITHUB_RUN_NUMBER"
           Write-Output "Updating version to $version"
-
-          $files = @(
-            "MonokaiVibrantAmped/source.extension.vsixmanifest",
-            "MonokaiVibrantAmped/Properties/AssemblyInfo.cs",
-            "MonokaiVibrantAmped/MonokaiVibrantAmped.cs"
-          )
-
-          foreach ($file in $files) {
-            if (Test-Path -Path $file) {
-              Write-Output "Updating: $file"
-              (Get-Content -Path $file) |
-                ForEach-Object { $_ -replace '1\.0\.0', $version } |
-                Set-Content -Path $file
-            } else {
-              Write-Warning "File not found: $file"
-            }
-          }
+          (Get-Content -Path "source.extension.vsixmanifest") |
+            ForEach-Object { $_ -replace '1\.0\.0', $version } |
+            Set-Content -Path "source.extension.vsixmanifest"
 
       - name: Restore
         run: nuget restore
