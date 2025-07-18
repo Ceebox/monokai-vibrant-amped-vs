@@ -19,22 +19,32 @@ jobs:
       - name: Configure msbuild
         uses: microsoft/setup-msbuild@v2
 
+      - name: Debug: List repository contents
+        run: |
+          echo "Current Directory: $(Get-Location)"
+          dir -Recurse
+
       - name: Update version
         shell: pwsh
         run: |
+          $version = "1.0.$env:GITHUB_RUN_NUMBER"
+          Write-Output "Updating version to $version"
+
           $files = @(
-              'MonokaiVibrantAmped\source.extension.vsixmanifest',
-              'MonokaiVibrantAmped\Properties\AssemblyInfo.cs'
-              'MonokaiVibrantAmped\MonokaiVibrantAmped.cs'
+            "MonokaiVibrantAmped/source.extension.vsixmanifest",
+            "MonokaiVibrantAmped/Properties/AssemblyInfo.cs",
+            "MonokaiVibrantAmped/MonokaiVibrantAmped.cs"
           )
+
           foreach ($file in $files) {
-              if (Test-Path -Path $file) {
-                  $content = Get-Content -Path $file
-                  $updated = $content | ForEach-Object { $_ -Replace '1.0.0', "1.0.$env:GITHUB_RUN_NUMBER" }
-                  Set-Content -Path $file -Value $updated -NoNewline
-              } else {
-                  Write-Warning "File not found: $file"
-              }
+            if (Test-Path -Path $file) {
+              Write-Output "Updating: $file"
+              (Get-Content -Path $file) |
+                ForEach-Object { $_ -replace '1\.0\.0', $version } |
+                Set-Content -Path $file
+            } else {
+              Write-Warning "File not found: $file"
+            }
           }
 
       - name: Restore
