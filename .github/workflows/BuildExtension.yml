@@ -19,11 +19,6 @@ jobs:
       - name: Configure msbuild
         uses: microsoft/setup-msbuild@v2
 
-      - name: Debug - List repository contents
-        run: |
-          echo "Current Directory: $(Get-Location)"
-          dir -Recurse
-
       - name: Update version
         shell: pwsh
         run: |
@@ -38,6 +33,11 @@ jobs:
 
       - name: Build
         run: msbuild /p:configuration=Release /p:DeployExtension=false /p:ZipPackageCompressionLevel=normal
+
+      - name: Debug - List repository contents
+        run: |
+          echo "Current Directory: $(Get-Location)"
+          dir -Recurse
       
       - uses: actions/upload-artifact@v4
         with:
