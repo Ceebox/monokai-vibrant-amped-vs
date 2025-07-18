@@ -1,0 +1,38 @@
+# https://blog.elmah.io/build-and-publish-visual-studio-extensions-with-github-actions/
+name: Build Extension
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Configure nuget
+        uses: nuget/setup-nuget@v1
+      - name: Configure msbuild
+        uses: microsoft/setup-msbuild@v1.0.2
+      - name: Update version
+        run: |
+          (Get-Content -Path MonokaiVibrantAmped\source.extension.vsixmanifest) |
+            ForEach-Object {$_ -Replace '1.0.0', '1.0.${{ github.run_number }}'} |
+              Set-Content -Path MonokaiVibrantAmped\source.extension.vsixmanifest
+          (Get-Content -Path MonokaiVibrantAmped\Properties\AssemblyInfo.cs) |
+            ForEach-Object {$_ -Replace '1.0.0', '1.0.${{ github.run_number }}'} |
+              Set-Content -Path MonokaiVibrantAmped\Properties\AssemblyInfo.cs
+          (Get-Content -Path MonokaiVibrantAmped\MonokaiVibrantAmped.cs) |
+            ForEach-Object {$_ -Replace '1.0.0', '1.0.${{ github.run_number }}'} |
+              Set-Content -Path MonokaiVibrantAmped\MonokaiVibrantAmped.cs
+      - name: Restore
+        run: nuget restore
+      - name: Build
+        run: msbuild /p:configuration=Release /p:DeployExtension=false /p:ZipPackageCompressionLevel=normal
+      - uses: actions/upload-artifact@v2
+        with:
+          name: MonokaiVibrantAmped.vsix
+          path: MonokaiVibrantAmped\bin\Release\MonokaiVibrantAmped.vsix
