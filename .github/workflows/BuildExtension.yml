@@ -17,7 +17,7 @@ jobs:
         uses: nuget/setup-nuget@v1
 
       - name: Configure msbuild
-        uses: microsoft/setup-msbuild@v1.3.0
+        uses: microsoft/setup-msbuild@v2
 
       - name: Update version
         shell: pwsh
