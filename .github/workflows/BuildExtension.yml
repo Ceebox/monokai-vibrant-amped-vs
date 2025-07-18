@@ -43,17 +43,19 @@ jobs:
       - name: Build Visual Studio extension
         run: msbuild /p:configuration=Release /p:DeployExtension=false /p:ZipPackageCompressionLevel=normal
 
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: MonokaiVibrantAmped.vsix
           path: bin\Release\MonokaiVibrantAmped.vsix
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
+        if: success()
         with:
           tag_name: ${{ steps.version.outputs.tag }}
           name: Release ${{ env.VERSION }}
+          body: ${{ github.event.head_commit.message }}
+          prerelease: false
           files: bin\Release\MonokaiVibrantAmped.vsix
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
