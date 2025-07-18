@@ -38,8 +38,8 @@ jobs:
 
       - name: Build
         run: msbuild /p:configuration=Release /p:DeployExtension=false /p:ZipPackageCompressionLevel=normal
-
+      
       - uses: actions/upload-artifact@v4
         with:
           name: MonokaiVibrantAmped.vsix
-          path: MonokaiVibrantAmped\bin\Release\MonokaiVibrantAmped.vsix
+          path: \bin\Release\MonokaiVibrantAmped.vsix
