@@ -19,7 +19,7 @@ jobs:
       - name: Configure msbuild
         uses: microsoft/setup-msbuild@v2
 
-      - name: Debug: List repository contents
+      - name: Debug - List repository contents
         run: |
           echo "Current Directory: $(Get-Location)"
           dir -Recurse
