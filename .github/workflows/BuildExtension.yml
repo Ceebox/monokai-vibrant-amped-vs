@@ -3,9 +3,9 @@ name: Build Extension
 
 on:
   push:
-    branches: [ main ]
+    branches: [ master ] # TODO: Change this, I don't know why git keeps using master
   pull_request:
-    branches: [ main ]
+    branches: [ master ]
 
 jobs:
   build:
