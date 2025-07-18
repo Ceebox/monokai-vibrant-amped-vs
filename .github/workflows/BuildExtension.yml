@@ -3,12 +3,13 @@ name: Build Extension
 on:
   push:
     branches: [master]
-  pull_request:
-    branches: [master]
 
 jobs:
   build:
     runs-on: windows-latest
+    permissions:
+      # Required to create the release
+      contents: write 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -19,27 +20,42 @@ jobs:
       - name: Configure msbuild
         uses: microsoft/setup-msbuild@v2
 
-      - name: Debug - List repository contents
-        run: |
-          echo "Current Directory: $(Get-Location)"
-          dir -Recurse
-
-      - name: Update version
+      - name: Set version number
+        id: version
         shell: pwsh
         run: |
           $version = "1.0.$env:GITHUB_RUN_NUMBER"
-          Write-Output "Updating version to $version"
+          echo "Setting version to $version"
+          echo "VERSION=$version" >> $env:GITHUB_ENV
+          echo "::set-output name=tag::v$version"  # deprecated but supported for compatibility
+          echo "::set-output name=filename::MonokaiVibrantAmped.vsix"
+
+      - name: Update version in .vsixmanifest
+        shell: pwsh
+        run: |
           (Get-Content -Path "source.extension.vsixmanifest") |
-            ForEach-Object { $_ -replace '1\.0\.0', $version } |
+            ForEach-Object { $_ -replace '1\.0\.0', "$env:VERSION" } |
             Set-Content -Path "source.extension.vsixmanifest"
 
-      - name: Restore
+      - name: Restore NuGet
         run: nuget restore
 
-      - name: Build
+      - name: Build Visual Studio extension
         run: msbuild /p:configuration=Release /p:DeployExtension=false /p:ZipPackageCompressionLevel=normal
 
       - uses: actions/upload-artifact@v4
         with:
           name: MonokaiVibrantAmped.vsix
-          path: MonokaiVibrantAmped\bin\Release\MonokaiVibrantAmped.vsix
+          path: bin\Release\MonokaiVibrantAmped.vsix
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: success()
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: Release ${{ env.VERSION }}
+          body: ${{ github.event.head_commit.message }}
+          prerelease: false
+          files: bin\Release\MonokaiVibrantAmped.vsix
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
