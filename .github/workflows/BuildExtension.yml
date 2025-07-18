@@ -60,6 +60,6 @@ jobs:
           tag_name: ${{ steps.version.outputs.tag }}
           name: Release ${{ env.VERSION }}
           body: ${{ github.event.head_commit.message }}
-          files: bin\Release\${{ steps.version.outputs.filename }}
+          files: bin/Release/${{ steps.version.outputs.filename }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
