@@ -47,24 +47,27 @@ jobs:
           name: ${{ steps.version.outputs.filename }}
           path: bin/Release/${{ steps.version.outputs.filename }}
 
-      - name: Find last release tag
-        id: last-tag
-        shell: bash
-        run: |
-          LAST_TAG=$(git describe --tags --abbrev=0)
-          echo "last_tag=$LAST_TAG" >> $GITHUB_OUTPUT
-
-      - name: Get commit changelog since last release
+      - name: Get Changelog
         id: changelog
         shell: bash
         run: |
-          if [[ -n "${{ steps.last-tag.outputs.last_tag }}" ]]; then
-            CHANGELOG=$(git log --pretty=format:'- %s' ${{ steps.last-tag.outputs.last_tag }}..HEAD)
+          echo "Getting commits since last tag..."
+
+          # Default changelog fallback
+          changelog="- Initial release"
+
+          # Catch if repo has at least one tag
+          if git tag --list | grep .; then
+            last_tag=$(git describe --tags --abbrev=0)
+            echo "Last tag found: $last_tag"
+            changelog=$(git log --pretty=format:'- %s' $last_tag..HEAD)
           else
-            CHANGELOG="- Initial release"
+            echo "No tags found — assuming first release"
           fi
+
+          # Export as multiline ENV for later use
           echo "changelog<<EOF" >> $GITHUB_ENV
-          printf "%s\n" "$CHANGELOG" >> $GITHUB_ENV
+          echo "$changelog" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
       - name: Create GitHub Release and Upload VSIX
