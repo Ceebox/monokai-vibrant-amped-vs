@@ -8,50 +8,64 @@ jobs:
   build:
     runs-on: windows-latest
     permissions:
-      # Required for creating a release
-      contents: write  
+      contents: write
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set version as 1.0.$GITHUB_RUN_NUMBER
+      - name: Set version number
         id: version
         shell: pwsh
         run: |
           $version = "1.0.$env:GITHUB_RUN_NUMBER"
-          Write-Output "Setting version to $version"
-          "VERSION=$version" >> $env:GITHUB_ENV
+          echo "VERSION=$version" >> $env:GITHUB_ENV
           "tag=v$version" >> $env:GITHUB_OUTPUT
           "filename=MonokaiVibrantAmped.vsix" >> $env:GITHUB_OUTPUT
 
       - name: Update version in .vsixmanifest
         shell: pwsh
         run: |
-          (Get-Content "source.extension.vsixmanifest") |
+          (Get-Content -Path "source.extension.vsixmanifest") |
             ForEach-Object { $_ -replace '1\.0\.0', "$env:VERSION" } |
-            Set-Content "source.extension.vsixmanifest"
+            Set-Content -Path "source.extension.vsixmanifest"
 
       - name: Configure NuGet
         uses: nuget/setup-nuget@v1
-
-      - name: Configure MSBuild
+        
+      - name: Configure MsBuild
         uses: microsoft/setup-msbuild@v2
-
+        
       - name: Restore NuGet packages
         run: nuget restore
+        
+      - name: Build Extension
+        run: msbuild /p:configuration=Release /p:DeployExtension=false /p:ZipPackageCompressionLevel=normal
 
-      - name: Build VSIX package
-        run: msbuild /p:Configuration=Release /p:DeployExtension=false /p:ZipPackageCompressionLevel=normal
-
-      - name: Debug – List VSIX output
-        run: dir bin\Release
-
-      - name: Upload VSIX as build artifact
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.version.outputs.filename }}
-          path: bin\Release\${{ steps.version.outputs.filename }}
+          path: bin/Release/${{ steps.version.outputs.filename }}
+
+      - name: Find last release tag
+        id: last-tag
+        shell: bash
+        run: |
+          LAST_TAG=$(git describe --tags --abbrev=0)
+          echo "last_tag=$LAST_TAG" >> $GITHUB_OUTPUT
+
+      - name: Get commit changelog since last release
+        id: changelog
+        shell: bash
+        run: |
+          if [[ -n "${{ steps.last-tag.outputs.last_tag }}" ]]; then
+            CHANGELOG=$(git log --pretty=format:'- %s' ${{ steps.last-tag.outputs.last_tag }}..HEAD)
+          else
+            CHANGELOG="- Initial release"
+          fi
+          echo "changelog<<EOF" >> $GITHUB_ENV
+          printf "%s\n" "$CHANGELOG" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
 
       - name: Create GitHub Release and Upload VSIX
         uses: softprops/action-gh-release@v2
@@ -59,7 +73,11 @@ jobs:
         with:
           tag_name: ${{ steps.version.outputs.tag }}
           name: Release ${{ env.VERSION }}
-          body: ${{ github.event.head_commit.message }}
+          body: |
+            ${{ github.event.head_commit.message }}
+
+            ## Changelog
+            ${{ env.changelog }}
           files: bin/Release/${{ steps.version.outputs.filename }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
