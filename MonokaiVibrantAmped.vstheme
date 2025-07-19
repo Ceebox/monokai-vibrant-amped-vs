@@ -8005,13 +8005,13 @@
         <Foreground Type="CT_RAW" Source="FFFFD52B" />
       </Color>
       <Color Name="ActionButtonBackground">
-        <Background Type="CT_RAW" Source="FF1A1A1A" />
+        <Background Type="CT_RAW" Source="FF232323" />
       </Color>
       <Color Name="ActionButtonStroke">
         <Background Type="CT_RAW" Source="FF1A1A1A" />
       </Color>
       <Color Name="ActionButtonStrokeHover">
-        <Background Type="CT_RAW" Source="FF1A1A1A" />
+        <Background Type="CT_RAW" Source="FFFAFAFA" />
       </Color>
       <Color Name="WindowButton">
         <Background Type="CT_RAW" Source="FF1A1A1A" />
@@ -8032,7 +8032,7 @@
         <Background Type="CT_RAW" Source="FFBABABA" />
       </Color>
       <Color Name="ActionButtonBackgroundActive">
-        <Background Type="CT_RAW" Source="FF221D46" />
+        <Background Type="CT_RAW" Source="FF1A1A1A" />
       </Color>
       <Color Name="ActionButtonStrokeActive">
         <Background Type="CT_RAW" Source="FF999999" />
