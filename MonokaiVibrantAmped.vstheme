@@ -7789,7 +7789,7 @@
         <Foreground Type="CT_INVALID" Source="00000000" />
       </Color>
       <Color Name="Indicator Margin">
-        <Background Type="CT_RAW" Source="FF232323" />
+        <Background Type="CT_RAW" Source="FF1A1A1A" />
         <Foreground Type="CT_INVALID" Source="00000000" />
       </Color>
     </Category>
