@@ -51,24 +51,27 @@ jobs:
         id: changelog
         shell: bash
         run: |
-          echo "Getting commits since last tag..."
-
           # Default changelog fallback
           changelog="- Initial release"
 
-          # Catch if repo has at least one tag
           if git tag --list | grep .; then
             last_tag=$(git describe --tags --abbrev=0)
             echo "Last tag found: $last_tag"
-            changelog=$(git log --pretty=format:'- %s' $last_tag..HEAD)
+            
+            # Fetch multiline changelog and write to GitHub environment file correctly
+            {
+              echo "changelog<<EOF"
+              git log --pretty=format:'- %s' $last_tag..HEAD
+              echo "EOF"
+            } >> $GITHUB_ENV
           else
             echo "No tags found — assuming first release"
-          fi
 
-          # Export as multiline ENV for later use
-          echo "changelog<<EOF" >> $GITHUB_ENV
-          echo "$changelog" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
+            # Write fallback changelog
+            echo "changelog<<EOF" >> $GITHUB_ENV
+            echo "$changelog" >> $GITHUB_ENV
+            echo "EOF" >> $GITHUB_ENV
+          fi
 
       - name: Create GitHub Release and Upload VSIX
         uses: softprops/action-gh-release@v2
